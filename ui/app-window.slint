@@ -1,0 +1,45 @@
+import {
+    VerticalBox,
+    HorizontalBox,
+    LineEdit,
+} from "std-widgets.slint";
+import { DirectoryList, FileEntry } from "dir-list.slint";
+import { Notification } from "notification.slint";
+
+export component AppWindow inherits Window {
+    in property <[FileEntry]> files;
+    callback directory_changed(string);
+    callback show_notification(string);
+
+    show_notification(message) => {
+        notification.show(message);
+    }
+
+    // Styling props  //
+    min-width: 400px;
+    min-height: 240px;
+    // ============== //
+
+    Rectangle {
+        VerticalBox {
+            padding: 8px;
+
+            LineEdit {
+                placeholder-text: "Enter directory path...";
+
+                accepted(text) => {
+                    directory_changed(text);
+                }
+            }
+
+            DirectoryList {
+                files: files;
+            }
+        }
+
+        notification := Notification {
+            x: parent.width - self.width - 25px;
+            y: parent.height - self.height - 25px;
+        }
+    }
+}

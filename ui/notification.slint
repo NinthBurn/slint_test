@@ -1,0 +1,44 @@
+export component Notification inherits Rectangle {
+    in-out property <string> message;
+    in-out property <bool> displayed: false;
+    callback show(string);
+
+    notification_timer := Timer {
+        interval: 5s;
+        running: false;
+
+        triggered() => {
+            root.displayed = false;
+            self.running = false;
+        }
+    }
+
+    show(message) => {
+        root.message = message;
+        root.displayed = true;
+
+        if (notification_timer.running) {
+            notification_timer.restart();
+        } else {
+            notification_timer.start();
+        }
+    }
+
+    // Styling props  //
+    opacity: displayed ? 1 : 0;
+    animate opacity { duration: 750ms; }
+
+    background: #333;
+    border-radius: 6px;
+
+    width: message-text.width + 20px;
+    height: message-text.height + 20px;
+    // ============== //
+
+    message-text := Text {
+        text: root.message;
+        color: white;
+        x: 10px;
+        y: 10px;
+    }
+}

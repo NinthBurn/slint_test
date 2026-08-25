@@ -1,0 +1,46 @@
+import {
+    VerticalBox,
+    HorizontalBox,
+    ListView,
+} from "std-widgets.slint";
+
+export struct FileEntry { name: string, is_directory: bool }
+
+export component DirectoryListElement inherits HorizontalLayout {
+    in property <FileEntry> file;
+
+    height: 32px;
+
+    Text {
+        text: file.is_directory ? "📁" : "📄";
+        width: 30px;
+        font-size: 20px;
+    }
+
+    Text {
+        text: file.name;
+        font-size: 20px;
+    }
+}
+
+export component DirectoryList inherits VerticalBox {
+    in property <[FileEntry]> files;
+
+    padding: 10px;
+
+    Rectangle {
+        border-color: gainsboro;
+        border-width: 2px;
+        border-radius: 12px;
+        background: whitesmoke;
+
+        VerticalLayout {
+            padding: 8px;
+            ListView {
+                for file in files: DirectoryListElement {
+                    file: file;
+                }
+            }
+        }
+    }
+}
