@@ -2,6 +2,7 @@ import {
     VerticalBox,
     HorizontalBox,
     ListView,
+    Palette
 } from "std-widgets.slint";
 
 export struct FileEntry { id: int, name: string, is_directory: bool }
@@ -39,13 +40,13 @@ export component DirectoryList inherits VerticalBox {
     in property <[FileEntry]> files;
     callback entry_clicked(int);
 
-    padding: 10px;
+    padding: 0px;
 
     Rectangle {
-        border-color: gainsboro;
-        border-width: 2px;
-        border-radius: 12px;
-        background: whitesmoke;
+        border-color: Palette.border;
+        border-width: 1px;
+        border-radius: 4px;
+        background: Palette.alternate-background;
 
         VerticalLayout {
             padding: 8px;

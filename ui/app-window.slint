@@ -3,6 +3,7 @@ import {
     HorizontalBox,
     LineEdit,
     Button,
+    Palette
 } from "std-widgets.slint";
 import { DirectoryList, FileEntry } from "dir-list.slint";
 import { Notification } from "notification.slint";
@@ -28,6 +29,8 @@ export component AppWindow inherits Window {
     preferred-height: 480px;
     // ============== //
 
+    title: "File Manager";
+
     Rectangle {
         VerticalBox {
             padding: 8px;
@@ -37,6 +40,7 @@ export component AppWindow inherits Window {
 
                 Button {
                     icon: @image-url("../icons/caret-left-fill.svg");
+                    colorize-icon: true;
                     clicked => {
                         go_back();
                     }
@@ -44,6 +48,7 @@ export component AppWindow inherits Window {
 
                 Button {
                     icon: @image-url("../icons/caret-right-fill.svg");
+                    colorize-icon: true;
                     clicked => {
                         go_forward();
                     }
@@ -51,6 +56,7 @@ export component AppWindow inherits Window {
 
                 Button {
                     icon: @image-url("../icons/caret-up-fill.svg");
+                    colorize-icon: true;
                     clicked => {
                         go_up();
                     }

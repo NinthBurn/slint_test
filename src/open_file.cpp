@@ -20,14 +20,14 @@ OpenFileResult OpenFilePlatf(const fs::path& path) {
 #elif defined(__linux__)
 #include <cstdlib>
 OpenFileResult OpenFilePlatf(const fs::path& path) {
-    std::string command = "xdg-open " + std::quoted(path.string());
-    int result = std::system(command.c_str());
-
-    if (result != 0) {
-        return OpenFileResult::Failed;
+    std::ostringstream command;
+    command << "xdg-open " << std::quoted(path.string());
+    int result = std::system(command.str().c_str());
+    if (result == 2) {
+        return OpenFileResult::NotAFile;
+    } else {
+        return result == 0 ? OpenFileResult::Success : OpenFileResult::Failed;
     }
-
-    return OpenFileResult::Success;
 }
 #else
 OpenFileResult OpenFilePlatf(const fs::path& path) {
