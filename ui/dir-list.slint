@@ -6,20 +6,26 @@ import {
 
 export struct FileEntry { name: string, is_directory: bool }
 
-export component DirectoryListElement inherits HorizontalLayout {
+export component DirectoryListElement inherits Rectangle {
     in property <FileEntry> file;
 
-    height: 32px;
+    background: touch.has-hover ? #50a3e2a8 : transparent;
+    touch := TouchArea { }
 
-    Text {
-        text: file.is_directory ? "📁" : "📄";
-        width: 30px;
-        font-size: 20px;
-    }
+    HorizontalLayout {
+        height: 32px;
+        cross-axis-alignment: center;
 
-    Text {
-        text: file.name;
-        font-size: 20px;
+        Text {
+            text: file.is_directory ? "📁" : "📄";
+            width: 30px;
+            font-size: 20px;
+        }
+
+        Text {
+            text: file.name;
+            font-size: 20px;
+        }
     }
 }
 
