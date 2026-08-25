@@ -2,14 +2,20 @@ import {
     VerticalBox,
     HorizontalBox,
     LineEdit,
+    Button,
 } from "std-widgets.slint";
 import { DirectoryList, FileEntry } from "dir-list.slint";
 import { Notification } from "notification.slint";
 
 export component AppWindow inherits Window {
     in property <[FileEntry]> files;
+    in property <string> search-path;
     callback directory_changed(string);
     callback show_notification(string);
+    callback entry_clicked(int);
+    callback go_back();
+    callback go_forward();
+    callback go_up();
 
     show_notification(message) => {
         notification.show(message);
@@ -26,16 +32,45 @@ export component AppWindow inherits Window {
         VerticalBox {
             padding: 8px;
 
-            LineEdit {
-                placeholder-text: "Enter directory path...";
+            HorizontalLayout {
+                spacing: 5px;
 
-                accepted(text) => {
-                    directory_changed(text);
+                Button {
+                    icon: @image-url("../icons/caret-left-fill.svg");
+                    clicked => {
+                        go_back();
+                    }
+                }
+
+                Button {
+                    icon: @image-url("../icons/caret-right-fill.svg");
+                    clicked => {
+                        go_forward();
+                    }
+                }
+
+                Button {
+                    icon: @image-url("../icons/caret-up-fill.svg");
+                    clicked => {
+                        go_up();
+                    }
+                }
+
+                LineEdit {
+                    placeholder-text: "Enter directory path...";
+                    text: search-path;
+
+                    accepted(text) => {
+                        directory_changed(text);
+                    }
                 }
             }
 
             DirectoryList {
                 files: files;
+                entry_clicked(entry) => {
+                    root.entry_clicked(entry);
+                }
             }
         }
 
