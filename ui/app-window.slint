@@ -3,14 +3,19 @@ import {
     HorizontalBox,
     LineEdit,
     Button,
-    Palette
+    Palette,
+    ScrollView,
 } from "std-widgets.slint";
 import { DirectoryList, FileEntry } from "dir-list.slint";
 import { Notification } from "notification.slint";
+import { UBreadcrumb } from "sleek-ui/widgets.slint";
 
 export component AppWindow inherits Window {
     in property <[FileEntry]> files;
     in property <string> search-path;
+    in property <[string]> breadcrumb_steps;
+
+    callback breadcrumb_step_clicked(int);
     callback directory_changed(string);
     callback show_notification(string);
     callback entry_clicked(int);
@@ -18,9 +23,7 @@ export component AppWindow inherits Window {
     callback go_forward();
     callback go_up();
 
-    show_notification(message) => {
-        notification.show(message);
-    }
+    show_notification(message) => notification.show(message);
 
     // Styling props  //
     min-width: 400px;
@@ -41,42 +44,51 @@ export component AppWindow inherits Window {
                 Button {
                     icon: @image-url("../icons/caret-left-fill.svg");
                     colorize-icon: true;
-                    clicked => {
-                        go_back();
-                    }
+                    clicked => go_back();
                 }
 
                 Button {
                     icon: @image-url("../icons/caret-right-fill.svg");
                     colorize-icon: true;
-                    clicked => {
-                        go_forward();
-                    }
+                    clicked => go_forward();
                 }
 
                 Button {
                     icon: @image-url("../icons/caret-up-fill.svg");
                     colorize-icon: true;
-                    clicked => {
-                        go_up();
-                    }
+                    clicked => go_up();
                 }
 
-                LineEdit {
-                    placeholder-text: "Enter directory path...";
-                    text: search-path;
+                Rectangle {
+                    background: Palette.alternate-background;
+                    border-color: Palette.border;
+                    border-width: 1px;
+                    border-radius: 4px;
+                    horizontal-stretch: 1;
+                    clip: true;
 
-                    accepted(text) => {
-                        directory_changed(text);
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+
+                        ScrollView {
+                            viewport-width: breadcrumb.content-width;
+
+                            breadcrumb := UBreadcrumb {
+                                steps: breadcrumb_steps;
+
+                                step-clicked(index, step) => {
+                                    breadcrumb_step_clicked(index);
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             DirectoryList {
                 files: files;
-                entry_clicked(entry) => {
-                    root.entry_clicked(entry);
-                }
+                entry_clicked(entry) => root.entry_clicked(entry);
             }
         }
 
