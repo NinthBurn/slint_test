@@ -15,7 +15,8 @@ enum class ChangeDirResult {
     NotADirectory,
     PermissionDenied,
     NoParent,
-    NoHistory
+    NoHistory,
+    NoChange
 };
 
 class FileExplorer {

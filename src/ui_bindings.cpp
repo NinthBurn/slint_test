@@ -3,9 +3,11 @@
 #include <iostream>
 #include <memory>
 
+#include "explorer.h"
 #include "explorer/open_file.h"
 #include "private/slint_models.h"
 #include "private/slint_string.h"
+
 namespace fs = std::filesystem;
 
 void DisplayNotification(const slint::ComponentHandle<AppWindow>& ui,
@@ -50,6 +52,10 @@ void HandleNavigation(const slint::ComponentHandle<AppWindow>& ui,
                       const FileExplorer& explorer,
                       std::shared_ptr<slint::VectorModel<FileEntry>>& model,
                       ChangeDirResult result) {
+    ui->set_search_path(
+        slint::SharedString(explorer.GetCurrentPath().string()));
+    ui->invoke_unfocus();
+
     switch (result) {
         case ChangeDirResult::Success:
             UpdateFileModel(explorer, model);
@@ -76,6 +82,10 @@ void HandleNavigation(const slint::ComponentHandle<AppWindow>& ui,
 
         case ChangeDirResult::NoHistory:  // temporary?
             DisplayNotification(ui, "No existing history");
+            break;
+
+        case ChangeDirResult::NoChange:
+            DisplayNotification(ui, "No change");
             break;
 
         default:
@@ -136,5 +146,10 @@ void AddHandlers(const slint::ComponentHandle<AppWindow>& ui,
     ui->on_breadcrumb_step_clicked([&](const int index) {
         HandleNavigation(
             ui, explorer, model, explorer.ChangeDirectoryToBreadcrumb(index));
+    });
+
+    ui->on_request_search_path([&]() {
+        ui->set_search_path(
+            slint::SharedString(explorer.GetCurrentPath().string()));
     });
 }

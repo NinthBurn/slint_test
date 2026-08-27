@@ -18,6 +18,10 @@ ChangeDirResult FileExplorer::ChangeDirectory(const fs::path& path) {
             return ChangeDirResult::NotADirectory;
         }
 
+        if (current_directory == new_directory || new_directory.empty()) {
+            return ChangeDirResult::NoChange;
+        }
+
         back_history.push_back(current_directory);
         current_directory = new_directory;
         forward_history.clear();

@@ -8,21 +8,28 @@ import {
 } from "std-widgets.slint";
 import { DirectoryList, FileEntry } from "dir-list.slint";
 import { Notification } from "notification.slint";
-import { UBreadcrumb } from "sleek-ui/widgets.slint";
+import { UBreadcrumb } from "@sleek-ui/widgets.slint";
 
 export component AppWindow inherits Window {
     in property <[FileEntry]> files;
-    in property <string> search-path;
     in property <[string]> breadcrumb_steps;
+    in property <string> search-path;
+    in-out property <bool> editing-path: false;
 
     callback breadcrumb_step_clicked(int);
     callback directory_changed(string);
     callback show_notification(string);
     callback entry_clicked(int);
+    callback request_search_path();
     callback go_back();
     callback go_forward();
     callback go_up();
+    callback unfocus();
 
+    unfocus => {
+        pathEdit.clear-focus();
+        editing-path = false;
+    }
     show_notification(message) => notification.show(message);
 
     // Styling props  //
@@ -60,25 +67,63 @@ export component AppWindow inherits Window {
                 }
 
                 Rectangle {
-                    background: Palette.alternate-background;
-                    border-color: Palette.border;
-                    border-width: 1px;
-                    border-radius: 4px;
-                    horizontal-stretch: 1;
                     clip: true;
+                    horizontal-stretch: 1;
 
-                    HorizontalLayout {
-                        padding-left: 16px;
-                        padding-right: 16px;
+                    pathEdit := LineEdit {
+                        text: search-path;
+                        enabled: editing-path;
+                        visible: editing-path;
+                        width: parent.width;
+                        accepted(text) => {
+                            editing-path = false;
+                            directory_changed(text);
+                        }
 
-                        ScrollView {
-                            viewport-width: breadcrumb.content-width;
+                        key-pressed(event) => {
+                            if event.text == "\u{001b}" {
+                                editing-path = false;
+                                self.clear-focus();
 
-                            breadcrumb := UBreadcrumb {
-                                steps: breadcrumb_steps;
+                                request_search_path();
+                                self.text = search-path;
 
-                                step-clicked(index, step) => {
-                                    breadcrumb_step_clicked(index);
+                                EventResult.accept
+                            }
+                            EventResult.reject
+                        }
+                    }
+
+                    if !editing-path: Rectangle {
+                        background: Palette.alternate-background;
+                        border-color: Palette.border;
+                        border-width: 1px;
+                        border-radius: 4px;
+                        clip: true;
+
+                        TouchArea {
+                            clicked => {
+                                editing-path = true;
+                                request_search_path();
+                                pathEdit.text = search-path;
+                                pathEdit.focus();
+                                pathEdit.select-all();
+                            }
+                        }
+
+                        HorizontalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+
+                            ScrollView {
+                                viewport-width: breadcrumb.content-width;
+                                viewport-x: breadcrumb.content-width > self.width ? - (breadcrumb.content-width - self.width) : 0px;
+                                breadcrumb := UBreadcrumb {
+                                    steps: breadcrumb_steps;
+
+                                    step-clicked(index, step) => {
+                                        breadcrumb_step_clicked(index);
+                                    }
                                 }
                             }
                         }
