@@ -1,0 +1,106 @@
+import { Button, LineEdit, ScrollView, Palette } from "std-widgets.slint";
+import { UBreadcrumb } from "@sleek-ui/widgets/breadcrumb.slint";
+
+export component NavigationBar inherits HorizontalLayout {
+    in property <[string]> breadcrumb_steps;
+    in property <string> search-path;
+    in-out property <bool> editing-path: false;
+
+    callback directory_changed(string);
+    callback unfocus_path_edit();
+    callback breadcrumb_step_clicked(int);
+    callback request_search_path();
+    callback go_back();
+    callback go_forward();
+    callback go_up();
+
+    unfocus_path_edit => {
+        pathEdit.clear-focus();
+        editing-path = false;
+    }
+
+    spacing: 5px;
+
+    // TODO: maybe use a global struct for image paths? seems to be the way to do it
+    Button {
+        icon: @image-url("../icons/caret-left-fill.svg");
+        colorize-icon: true;
+        clicked => go_back();
+    }
+
+    Button {
+        icon: @image-url("../icons/caret-right-fill.svg");
+        colorize-icon: true;
+        clicked => go_forward();
+    }
+
+    Button {
+        icon: @image-url("../icons/caret-up-fill.svg");
+        colorize-icon: true;
+        clicked => go_up();
+    }
+
+    Rectangle {
+        clip: true;
+        horizontal-stretch: 1;
+
+        pathEdit := LineEdit {
+            text: search-path;
+            enabled: editing-path;
+            visible: editing-path;
+            width: parent.width;
+            accepted(text) => {
+                editing-path = false;
+                directory_changed(text);
+            }
+
+            key-pressed(event) => {
+                if event.text == "\u{001b}" {
+                    editing-path = false;
+                    self.clear-focus();
+
+                    request_search_path();
+                    self.text = search-path;
+
+                    EventResult.accept
+                }
+                EventResult.reject
+            }
+        }
+
+        if !editing-path: Rectangle {
+            background: Palette.alternate-background;
+            border-color: Palette.border;
+            border-width: 1px;
+            border-radius: 4px;
+            clip: true;
+
+            TouchArea {
+                clicked => {
+                    editing-path = true;
+                    request_search_path();
+                    pathEdit.text = search-path;
+                    pathEdit.focus();
+                    pathEdit.select-all();
+                }
+            }
+
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+
+                ScrollView {
+                    viewport-width: breadcrumb.content-width;
+                    viewport-x: breadcrumb.content-width > self.width ? - (breadcrumb.content-width - self.width) : 0px;
+                    breadcrumb := UBreadcrumb {
+                        steps: breadcrumb_steps;
+
+                        step-clicked(index, step) => {
+                            breadcrumb_step_clicked(index);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
