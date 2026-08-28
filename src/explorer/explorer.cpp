@@ -2,6 +2,7 @@
 namespace fs = std::filesystem;
 
 FileExplorer::FileExplorer() : current_directory(fs::current_path()) {}
+FileExplorer::FileExplorer(fs::path starting_path) : current_directory(starting_path) {}
 
 ChangeDirResult FileExplorer::ChangeDirectory(const fs::path& path) {
     try {

@@ -1,7 +1,7 @@
 #pragma once
+#include <algorithm>
 #include <filesystem>
 #include <vector>
-#include <algorithm>
 
 struct DirectoryEntry {
     std::filesystem::path path;
@@ -27,6 +27,7 @@ private:
 
 public:
     FileExplorer();
+    FileExplorer(std::filesystem::path starting_path);
 
     const std::filesystem::path& GetCurrentPath() const;
     std::vector<DirectoryEntry> GetEntries() const;

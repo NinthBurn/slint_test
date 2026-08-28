@@ -1,20 +1,28 @@
 #pragma once
 
+#include <memory>
+
 #include "app-window.h"
 #include "explorer/explorer.h"
+#include "private/slint_item_tree.h"
 #include "private/slint_models.h"
+#include "private/slint_string.h"
 
-void display_notification(const slint::ComponentHandle<AppWindow>& ui,
-                          const std::string& message);
+class UIController {
+private:
+    FileExplorer explorer;
 
-void UpdateFileModel(const FileExplorer& explorer,
-                     std::shared_ptr<slint::VectorModel<FileEntry>>& model);
+    const slint::ComponentHandle<AppWindow>& ui;
+    std::shared_ptr<slint::VectorModel<FileEntry>> fileListModel;
+    std::shared_ptr<slint::VectorModel<slint::SharedString>> breadcrumbModel;
 
-void HandleNavigation(const slint::ComponentHandle<AppWindow>& ui,
-                      const FileExplorer& explorer,
-                      std::shared_ptr<slint::VectorModel<FileEntry>>& model,
-                      ChangeDirResult result);
+    void HandleNavigation(ChangeDirResult result);
+    void AddHandlers();
 
-void AddHandlers(const slint::ComponentHandle<AppWindow>& ui,
-                 FileExplorer& explorer,
-                 std::shared_ptr<slint::VectorModel<FileEntry>>& model);
+    void DisplayNotification(const std::string& message);
+    void UpdateFileModel();
+    void UpdateBreadcrumbModel(const std::vector<std::filesystem::path>& paths);
+
+public:
+    UIController(const slint::ComponentHandle<AppWindow>& ui);
+};

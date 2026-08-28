@@ -7,6 +7,7 @@ import {
     ScrollView,
 } from "std-widgets.slint";
 import { DirectoryList, FileEntry } from "dir-list.slint";
+import { NavigationBar } from "nav-bar.slint";
 import { Notification } from "notification.slint";
 import { UBreadcrumb } from "@sleek-ui/widgets.slint";
 
@@ -14,7 +15,6 @@ export component AppWindow inherits Window {
     in property <[FileEntry]> files;
     in property <[string]> breadcrumb_steps;
     in property <string> search-path;
-    in-out property <bool> editing-path: false;
 
     callback breadcrumb_step_clicked(int);
     callback directory_changed(string);
@@ -24,12 +24,8 @@ export component AppWindow inherits Window {
     callback go_back();
     callback go_forward();
     callback go_up();
-    callback unfocus();
+    callback unfocus_path_edit();
 
-    unfocus => {
-        pathEdit.clear-focus();
-        editing-path = false;
-    }
     show_notification(message) => notification.show(message);
 
     // Styling props  //
@@ -45,94 +41,21 @@ export component AppWindow inherits Window {
         VerticalBox {
             padding: 8px;
 
-            HorizontalLayout {
-                spacing: 5px;
-
-                Button {
-                    icon: @image-url("../icons/caret-left-fill.svg");
-                    colorize-icon: true;
-                    clicked => go_back();
-                }
-
-                Button {
-                    icon: @image-url("../icons/caret-right-fill.svg");
-                    colorize-icon: true;
-                    clicked => go_forward();
-                }
-
-                Button {
-                    icon: @image-url("../icons/caret-up-fill.svg");
-                    colorize-icon: true;
-                    clicked => go_up();
-                }
-
-                Rectangle {
-                    clip: true;
-                    horizontal-stretch: 1;
-
-                    pathEdit := LineEdit {
-                        text: search-path;
-                        enabled: editing-path;
-                        visible: editing-path;
-                        width: parent.width;
-                        accepted(text) => {
-                            editing-path = false;
-                            directory_changed(text);
-                        }
-
-                        key-pressed(event) => {
-                            if event.text == "\u{001b}" {
-                                editing-path = false;
-                                self.clear-focus();
-
-                                request_search_path();
-                                self.text = search-path;
-
-                                EventResult.accept
-                            }
-                            EventResult.reject
-                        }
-                    }
-
-                    if !editing-path: Rectangle {
-                        background: Palette.alternate-background;
-                        border-color: Palette.border;
-                        border-width: 1px;
-                        border-radius: 4px;
-                        clip: true;
-
-                        TouchArea {
-                            clicked => {
-                                editing-path = true;
-                                request_search_path();
-                                pathEdit.text = search-path;
-                                pathEdit.focus();
-                                pathEdit.select-all();
-                            }
-                        }
-
-                        HorizontalLayout {
-                            padding-left: 16px;
-                            padding-right: 16px;
-
-                            ScrollView {
-                                viewport-width: breadcrumb.content-width;
-                                viewport-x: breadcrumb.content-width > self.width ? - (breadcrumb.content-width - self.width) : 0px;
-                                breadcrumb := UBreadcrumb {
-                                    steps: breadcrumb_steps;
-
-                                    step-clicked(index, step) => {
-                                        breadcrumb_step_clicked(index);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            // TODO: refactor this shitcu ce 
+            NavigationBar {
+                breadcrumb_steps: root.breadcrumb_steps;
+                search-path: root.search-path;
+                breadcrumb_step_clicked(index) => root.breadcrumb_step_clicked(index);
+                go_back => root.go_back();
+                go_forward => root.go_forward();
+                go_up => root.go_up();
+                unfocus_path_edit => root.unfocus_path_edit();
+                request_search_path => root.request_search_path();
+                directory_changed(path) => root.directory_changed(path);
+             }
 
             DirectoryList {
-                files: files;
+                files: root.files;
                 entry_clicked(entry) => root.entry_clicked(entry);
             }
         }
