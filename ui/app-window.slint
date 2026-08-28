@@ -13,19 +13,19 @@ import { UBreadcrumb } from "@sleek-ui/widgets.slint";
 
 export component AppWindow inherits Window {
     in property <[FileEntry]> files;
-    in property <[string]> breadcrumb_steps;
-    in property <string> search-path;
+    in property <[string]> breadcrumb_steps <=> navbar.breadcrumb_steps;
+    in property <string> search-path <=> navbar.search-path;
 
-    callback breadcrumb_step_clicked(int);
-    callback directory_changed(string);
-    callback show_notification(string);
+    callback breadcrumb_step_clicked <=> navbar.breadcrumb_step_clicked;
+    callback directory_changed <=> navbar.directory_changed;
+    callback request_search_path <=> navbar.request_search_path;
+    callback go_back <=> navbar.go_back;
+    callback go_forward <=> navbar.go_forward;
+    callback go_up <=> navbar.go_up;
+    callback unfocus_path_edit <=> navbar.unfocus_path_edit;
+
     callback entry_clicked(int);
-    callback request_search_path();
-    callback go_back();
-    callback go_forward();
-    callback go_up();
-    callback unfocus_path_edit();
-
+    callback show_notification(string);
     show_notification(message) => notification.show(message);
 
     // Styling props  //
@@ -41,18 +41,7 @@ export component AppWindow inherits Window {
         VerticalBox {
             padding: 8px;
 
-            // TODO: refactor this shitcu ce 
-            NavigationBar {
-                breadcrumb_steps: root.breadcrumb_steps;
-                search-path: root.search-path;
-                breadcrumb_step_clicked(index) => root.breadcrumb_step_clicked(index);
-                go_back => root.go_back();
-                go_forward => root.go_forward();
-                go_up => root.go_up();
-                unfocus_path_edit => root.unfocus_path_edit();
-                request_search_path => root.request_search_path();
-                directory_changed(path) => root.directory_changed(path);
-             }
+            navbar := NavigationBar { }
 
             DirectoryList {
                 files: root.files;
