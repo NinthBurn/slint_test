@@ -3,28 +3,36 @@
 #include <iostream>
 #include <memory>
 
+#include "app-window.h"
 #include "explorer.h"
 #include "explorer/open_file.h"
+#include "private/slint_models.h"
 #include "private/slint_string.h"
 
 namespace fs = std::filesystem;
+using slint::SharedString;
+using slint::VectorModel;
+using std::make_shared;
 
 UIController::UIController(const slint::ComponentHandle<AppWindow>& ui)
     : ui(ui) {
-    fileListModel = std::make_shared<slint::VectorModel<FileEntry>>();
-    breadcrumbModel =
-        std::make_shared<slint::VectorModel<slint::SharedString>>();
+    fileListModel = make_shared<VectorModel<FileEntry>>();
+    breadcrumbModel = make_shared<VectorModel<SharedString>>();
+    tabModel = make_shared<VectorModel<TabInfo>>();
+
     ui->set_files(fileListModel);
     ui->set_breadcrumb_steps(breadcrumbModel);
+    ui->set_tabs(tabModel);
+
     HandleNavigation(ChangeDirResult::Success);
     AddHandlers();
 }
 void UIController::DisplayNotification(const std::string& message) {
     std::cout << message << std::endl;
-    ui->invoke_show_notification(slint::SharedString(message));
+    ui->invoke_show_notification(SharedString(message));
 }
 
-void UIController::UpdateFileModel() {
+void UIController::UpdateFileModel() const {
     fileListModel->clear();
 
     for (const auto& entry : explorer.GetEntries()) {
@@ -36,7 +44,8 @@ void UIController::UpdateFileModel() {
     }
 }
 
-void UIController::UpdateBreadcrumbModel(const std::vector<fs::path>& paths) {
+void UIController::UpdateBreadcrumbModel(
+    const std::vector<fs::path>& paths) const {
     breadcrumbModel->clear();
 
     for (const auto& path : paths) {
@@ -48,19 +57,32 @@ void UIController::UpdateBreadcrumbModel(const std::vector<fs::path>& paths) {
             name = path.filename().string();
         }
 
-        breadcrumbModel->push_back(slint::SharedString(name));
+        breadcrumbModel->push_back(SharedString(name));
+    }
+}
+
+void UIController::UpdateTabModel() const {
+    tabModel->clear();
+
+    const auto& tabs = explorer.GetTabs();
+    const auto current = explorer.GetCurrentTabIndex();
+
+    for (size_t i = 0; i < tabs.size(); ++i) {
+        TabInfo info;
+        info.title = tabs[i].GetTitle();
+        info.active = i == current;
+
+        tabModel->push_back(info);
     }
 }
 
 void UIController::HandleNavigation(ChangeDirResult result) {
-    ui->set_search_path(
-        slint::SharedString(explorer.GetCurrentPath().string()));
+    ui->set_search_path(SharedString(explorer.GetCurrentPath().string()));
     ui->invoke_unfocus_path_edit();
 
     switch (result) {
         case ChangeDirResult::Success:
-            UpdateFileModel();
-            UpdateBreadcrumbModel(explorer.GetBreadcrumbPaths());
+            RefreshExplorerState();
             DisplayNotification("Changed directory");
             break;
 
@@ -92,6 +114,12 @@ void UIController::HandleNavigation(ChangeDirResult result) {
             DisplayNotification("Invalid operation");
             break;
     }
+}
+
+void UIController::RefreshExplorerState() const {
+    UpdateFileModel();
+    UpdateBreadcrumbModel(explorer.GetBreadcrumbPaths());
+    UpdateTabModel();
 }
 
 void UIController::AddHandlers() {
@@ -130,7 +158,7 @@ void UIController::AddHandlers() {
 
     ui->on_go_up([&]() { HandleNavigation(explorer.NavigateUp()); });
 
-    ui->on_directory_changed([&](const slint::SharedString& path) {
+    ui->on_directory_changed([&](const SharedString& path) {
         HandleNavigation(explorer.ChangeDirectory(path.data()));
     });
 
@@ -139,7 +167,22 @@ void UIController::AddHandlers() {
     });
 
     ui->on_request_search_path([&]() {
-        ui->set_search_path(
-            slint::SharedString(explorer.GetCurrentPath().string()));
+        ui->set_search_path(SharedString(explorer.GetCurrentPath().string()));
+    });
+
+    //// = = = = Tab Controls = = = = ////
+    ui->on_tab_clicked([&](const int index) {
+        explorer.SelectTab(index);
+        RefreshExplorerState();
+    });
+
+    ui->on_new_tab([&]() {
+        explorer.CreateTab(explorer.GetCurrentPath());
+        RefreshExplorerState();
+    });
+
+    ui->on_close_tab([&](const int index) {
+        explorer.CloseTab(index);
+        RefreshExplorerState();
     });
 }

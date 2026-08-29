@@ -1,7 +1,9 @@
 #pragma once
-#include <algorithm>
+
 #include <filesystem>
 #include <vector>
+
+#include "directory_tab.h"
 
 struct DirectoryEntry {
     std::filesystem::path path;
@@ -9,26 +11,28 @@ struct DirectoryEntry {
     bool is_directory;
 };
 
-enum class ChangeDirResult {
-    Success,
-    DoesNotExist,
-    NotADirectory,
-    PermissionDenied,
-    NoParent,
-    NoHistory,
-    NoChange
-};
-
 class FileExplorer {
 private:
-    std::filesystem::path current_directory;
-    std::vector<std::filesystem::path> back_history;
-    std::vector<std::filesystem::path> forward_history;
+    std::vector<DirectoryTab> tabs;
+    size_t current_tab_idx;
 
 public:
     FileExplorer();
     FileExplorer(std::filesystem::path starting_path);
 
+    // = = = Tab Management = = = //
+    const DirectoryTab& GetCurrentTab() const;
+    DirectoryTab& GetCurrentTab();
+    size_t GetCurrentTabIndex() const;
+    size_t GetTabCount() const;
+    const std::vector<DirectoryTab>& GetTabs() const;
+
+    void CreateTab();
+    void CreateTab(const std::filesystem::path& starting_path);
+    bool CloseTab(size_t index);
+    bool SelectTab(size_t index);
+
+    // = = = = Navigation = = = = //
     const std::filesystem::path& GetCurrentPath() const;
     std::vector<DirectoryEntry> GetEntries() const;
 

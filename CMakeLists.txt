@@ -23,6 +23,7 @@ target_sources(my_application PRIVATE
     src/ui_bindings.cpp
 
     src/explorer/explorer.cpp
+    src/explorer/directory_tab.cpp
     src/explorer/open_file.cpp
 )
 

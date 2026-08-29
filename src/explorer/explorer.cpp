@@ -1,111 +1,109 @@
 #include "explorer.h"
 namespace fs = std::filesystem;
 
-FileExplorer::FileExplorer() : current_directory(fs::current_path()) {}
-FileExplorer::FileExplorer(fs::path starting_path) : current_directory(starting_path) {}
+FileExplorer::FileExplorer() : current_tab_idx(0) {
+    tabs.emplace_back();
+}
+
+FileExplorer::FileExplorer(fs::path starting_path) : current_tab_idx(0) {
+    tabs.emplace_back(std::move(starting_path));
+}
+
+// = = = Tab Management = = = //
+const DirectoryTab& FileExplorer::GetCurrentTab() const {
+    return tabs[current_tab_idx];
+}
+
+DirectoryTab& FileExplorer::GetCurrentTab() {
+    return tabs[current_tab_idx];
+}
+
+size_t FileExplorer::GetCurrentTabIndex() const {
+    return current_tab_idx;
+}
+
+size_t FileExplorer::GetTabCount() const {
+    return tabs.size();
+}
+
+const std::vector<DirectoryTab>& FileExplorer::GetTabs() const {
+    return tabs;
+}
+
+void FileExplorer::CreateTab() {
+    tabs.emplace_back();
+    current_tab_idx = tabs.size() - 1;
+}
+
+void FileExplorer::CreateTab(const fs::path& starting_path) {
+    tabs.emplace_back(starting_path);
+    current_tab_idx = tabs.size() - 1;
+}
+
+bool FileExplorer::SelectTab(size_t index) {
+    if (index >= tabs.size()) {
+        return false;
+    }
+
+    current_tab_idx = index;
+
+    return true;
+}
+
+bool FileExplorer::CloseTab(size_t index) {
+    if (index >= tabs.size() || tabs.size() == 1) {
+        return false;
+    }
+
+    tabs.erase(tabs.begin() + index);
+
+    if (current_tab_idx > index) {
+        --current_tab_idx;
+    } else if (current_tab_idx >= tabs.size()) {
+        current_tab_idx = tabs.size() - 1;
+    }
+
+    return true;
+}
+
+// = = = = Navigation = = = = //
 
 ChangeDirResult FileExplorer::ChangeDirectory(const fs::path& path) {
-    try {
-        fs::path new_directory =
-            path.is_absolute() ? path : current_directory / path;
-
-        new_directory = fs::weakly_canonical(new_directory);
-
-        if (!fs::exists(new_directory)) {
-            return ChangeDirResult::DoesNotExist;
-        }
-
-        if (!fs::is_directory(new_directory)) {
-            return ChangeDirResult::NotADirectory;
-        }
-
-        if (current_directory == new_directory || new_directory.empty()) {
-            return ChangeDirResult::NoChange;
-        }
-
-        back_history.push_back(current_directory);
-        current_directory = new_directory;
-        forward_history.clear();
-
-        return ChangeDirResult::Success;
-    } catch (const fs::filesystem_error&) {
-        return ChangeDirResult::PermissionDenied;
-    }
+    return tabs[current_tab_idx].ChangeDirectory(path);
 }
 
 const fs::path& FileExplorer::GetCurrentPath() const {
-    return current_directory;
+    return tabs[current_tab_idx].GetCurrentPath();
+}
+
+ChangeDirResult FileExplorer::NavigateBack() {
+    return tabs[current_tab_idx].NavigateBack();
+}
+
+ChangeDirResult FileExplorer::NavigateForward() {
+    return tabs[current_tab_idx].NavigateForward();
+}
+
+ChangeDirResult FileExplorer::NavigateUp() {
+    return tabs[current_tab_idx].NavigateUp();
+}
+
+std::vector<fs::path> FileExplorer::GetBreadcrumbPaths() const {
+    return tabs[current_tab_idx].GetBreadcrumbPaths();
+}
+
+ChangeDirResult FileExplorer::ChangeDirectoryToBreadcrumb(size_t index) {
+    return tabs[current_tab_idx].ChangeDirectoryToBreadcrumb(index);
 }
 
 std::vector<DirectoryEntry> FileExplorer::GetEntries() const {
     std::vector<DirectoryEntry> entries;
 
-    for (const auto& entry : fs::directory_iterator(current_directory)) {
+    for (const auto& entry : fs::directory_iterator(GetCurrentPath())) {
         entries.push_back({.path = entry.path(),
                            .name = entry.path().filename().string(),
                            .is_directory = entry.is_directory()});
     }
 
     return entries;
-}
-
-ChangeDirResult FileExplorer::NavigateBack() {
-    if (back_history.empty()) {
-        return ChangeDirResult::NoHistory;
-    }
-
-    forward_history.push_back(current_directory);
-    current_directory = back_history.back();
-    back_history.pop_back();
-
-    return ChangeDirResult::Success;
-}
-
-ChangeDirResult FileExplorer::NavigateForward() {
-    if (forward_history.empty()) {
-        return ChangeDirResult::NoHistory;
-    }
-
-    back_history.push_back(current_directory);
-    current_directory = forward_history.back();
-    forward_history.pop_back();
-
-    return ChangeDirResult::Success;
-}
-
-ChangeDirResult FileExplorer::NavigateUp() {
-    fs::path parent = current_directory.parent_path();
-
-    if (parent == current_directory) {
-        return ChangeDirResult::NoParent;
-    }
-
-    return ChangeDirectory(parent);
-}
-
-std::vector<fs::path> FileExplorer::GetBreadcrumbPaths() const {
-    std::vector<fs::path> paths;
-
-    fs::path current = current_directory;
-
-    while (current.has_parent_path() && current != current.parent_path()) {
-        paths.push_back(current);
-        current = current.parent_path();
-    }
-
-    paths.push_back(current);
-
-    std::reverse(paths.begin(), paths.end());
-
-    return paths;
-}
-
-ChangeDirResult FileExplorer::ChangeDirectoryToBreadcrumb(size_t index) {
-    auto paths = GetBreadcrumbPaths();
-
-    if (index >= paths.size()) {
-        return ChangeDirResult::DoesNotExist;
-    }
-
-    return ChangeDirectory(paths[index]);
 }

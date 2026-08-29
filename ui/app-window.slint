@@ -10,11 +10,13 @@ import { DirectoryList, FileEntry } from "dir-list.slint";
 import { NavigationBar } from "nav-bar.slint";
 import { Notification } from "notification.slint";
 import { UBreadcrumb } from "@sleek-ui/widgets.slint";
+import { TabInfo, TabBar } from "tab-bar.slint";
 
 export component AppWindow inherits Window {
     in property <[FileEntry]> files;
     in property <[string]> breadcrumb_steps <=> navbar.breadcrumb_steps;
     in property <string> search-path <=> navbar.search-path;
+    in property <[TabInfo]> tabs <=> tabbar.tabs;
 
     callback breadcrumb_step_clicked <=> navbar.breadcrumb_step_clicked;
     callback directory_changed <=> navbar.directory_changed;
@@ -23,6 +25,10 @@ export component AppWindow inherits Window {
     callback go_forward <=> navbar.go_forward;
     callback go_up <=> navbar.go_up;
     callback unfocus_path_edit <=> navbar.unfocus_path_edit;
+
+    callback tab_clicked <=> tabbar.tab_clicked;
+    callback new_tab <=> tabbar.new_tab;
+    callback close_tab <=> tabbar.close_tab;
 
     callback entry_clicked(int);
     callback show_notification(string);
@@ -47,6 +53,8 @@ export component AppWindow inherits Window {
                 files: root.files;
                 entry_clicked(entry) => root.entry_clicked(entry);
             }
+
+            tabbar := TabBar { }
         }
 
         notification := Notification {
