@@ -1,9 +1,5 @@
-#pragma once
-#include <filesystem>
-
+#include "open_file.h"
 namespace fs = std::filesystem;
-
-enum class OpenFileResult { Success, DoesNotExist, NotAFile, Failed };
 
 #ifdef _WIN32
 #include <windows.h>

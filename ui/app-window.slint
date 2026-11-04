@@ -3,24 +3,30 @@ import {
     HorizontalBox,
     LineEdit,
     Button,
-    Palette
+    Palette,
+    ScrollView,
 } from "std-widgets.slint";
 import { DirectoryList, FileEntry } from "dir-list.slint";
+import { NavigationBar } from "nav-bar.slint";
 import { Notification } from "notification.slint";
+import { UBreadcrumb } from "@sleek-ui/widgets.slint";
 
 export component AppWindow inherits Window {
     in property <[FileEntry]> files;
-    in property <string> search-path;
-    callback directory_changed(string);
-    callback show_notification(string);
-    callback entry_clicked(int);
-    callback go_back();
-    callback go_forward();
-    callback go_up();
+    in property <[string]> breadcrumb_steps <=> navbar.breadcrumb_steps;
+    in property <string> search-path <=> navbar.search-path;
 
-    show_notification(message) => {
-        notification.show(message);
-    }
+    callback breadcrumb_step_clicked <=> navbar.breadcrumb_step_clicked;
+    callback directory_changed <=> navbar.directory_changed;
+    callback request_search_path <=> navbar.request_search_path;
+    callback go_back <=> navbar.go_back;
+    callback go_forward <=> navbar.go_forward;
+    callback go_up <=> navbar.go_up;
+    callback unfocus_path_edit <=> navbar.unfocus_path_edit;
+
+    callback entry_clicked(int);
+    callback show_notification(string);
+    show_notification(message) => notification.show(message);
 
     // Styling props  //
     min-width: 400px;
@@ -35,48 +41,11 @@ export component AppWindow inherits Window {
         VerticalBox {
             padding: 8px;
 
-            HorizontalLayout {
-                spacing: 5px;
-
-                Button {
-                    icon: @image-url("../icons/caret-left-fill.svg");
-                    colorize-icon: true;
-                    clicked => {
-                        go_back();
-                    }
-                }
-
-                Button {
-                    icon: @image-url("../icons/caret-right-fill.svg");
-                    colorize-icon: true;
-                    clicked => {
-                        go_forward();
-                    }
-                }
-
-                Button {
-                    icon: @image-url("../icons/caret-up-fill.svg");
-                    colorize-icon: true;
-                    clicked => {
-                        go_up();
-                    }
-                }
-
-                LineEdit {
-                    placeholder-text: "Enter directory path...";
-                    text: search-path;
-
-                    accepted(text) => {
-                        directory_changed(text);
-                    }
-                }
-            }
+            navbar := NavigationBar { }
 
             DirectoryList {
-                files: files;
-                entry_clicked(entry) => {
-                    root.entry_clicked(entry);
-                }
+                files: root.files;
+                entry_clicked(entry) => root.entry_clicked(entry);
             }
         }
 

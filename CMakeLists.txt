@@ -19,6 +19,15 @@ endif (NOT Slint_FOUND)
 
 add_executable(my_application src/main.cpp)
 
+target_sources(my_application PRIVATE
+    src/ui_bindings.cpp
+
+    src/explorer/explorer.cpp
+    src/explorer/open_file.cpp
+)
+
+target_include_directories(my_application PRIVATE src/explorer)
+
 target_link_libraries(my_application PRIVATE Slint::Slint)
 slint_target_sources(my_application
 	ui/app-window.slint
